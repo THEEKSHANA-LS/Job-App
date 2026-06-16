@@ -10,6 +10,10 @@ import savedJobRoutes from "./routes/savedJobRoutes.js";
 import reviewRoutes from "./routes/reviewRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
+import aiRoutes from "./routes/aiRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
+
 
 const app = express();
 
@@ -28,6 +32,9 @@ app.use("/api/saved-jobs", savedJobRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/ai", aiRoutes);
+app.use("/api/admin", adminRoutes);
 
 // test route
 app.get("/", (req, res) => {

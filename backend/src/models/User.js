@@ -47,6 +47,12 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+
+    skills: [
+    {
+    type: String,
+    },
+   ],
   },
   { timestamps: true }
 );
