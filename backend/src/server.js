@@ -18,14 +18,32 @@ const io = new Server(httpServer, {
 });
 
 io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
+  console.log("✅ User connected:", socket.id);
 
-  socket.on("sendMessage", (message) => {
-    io.emit("receiveMessage", message);
+  // Join chat room
+  socket.on("join_room", (roomId) => {
+    socket.join(roomId);
+    console.log(`User joined room: ${roomId}`);
   });
 
+  // Send message
+  socket.on("send_message", (data) => {
+    const { senderId, receiverId, message } = data;
+
+    // Create consistent room ID (VERY IMPORTANT FIX)
+    const roomId = [senderId, receiverId].sort().join("_");
+
+    io.to(roomId).emit("receive_message", {
+      senderId,
+      receiverId,
+      message,
+      createdAt: new Date(),
+    });
+  });
+
+  // Disconnect
   socket.on("disconnect", () => {
-    console.log("User disconnected");
+    console.log("❌ User disconnected:", socket.id);
   });
 });
 
