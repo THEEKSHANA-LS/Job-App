@@ -6,7 +6,9 @@ import '../../constants/app_theme.dart';
 import '../../models/job_model.dart';
 import '../../providers/application_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/saved_job_provider.dart';
 import '../../widgets/primary_button.dart';
+import '../shared/chat_screen.dart';
 
 class JobDetailScreen extends StatefulWidget {
   final JobModel job;
@@ -121,6 +123,32 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
           icon: const Icon(Icons.arrow_back_ios_rounded),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          Consumer<SavedJobProvider>(
+            builder: (_, savedProv, __) {
+              final isSaved = savedProv.isSaved(widget.job.id);
+              return IconButton(
+                icon: Icon(
+                  isSaved ? Icons.bookmark_rounded : Icons.bookmark_outline_rounded,
+                  color: isSaved ? AppColors.primary : AppColors.textSecondary,
+                ),
+                onPressed: () async {
+                  final token = context.read<AuthProvider>().user?.token ?? '';
+                  if (isSaved) {
+                    final saved = savedProv.savedJobs.firstWhere(
+                      (s) => s.job?.id == widget.job.id,
+                      orElse: () => savedProv.savedJobs.first,
+                    );
+                    await savedProv.removeSavedJob(token: token, savedJobId: saved.id, jobId: widget.job.id);
+                  } else {
+                    await savedProv.saveJob(token: token, jobId: widget.job.id);
+                  }
+                },
+                tooltip: isSaved ? 'Remove from saved' : 'Save job',
+              );
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -265,29 +293,59 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-          child: alreadyApplied
-              ? Container(
-                  height: 50,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color:        AppColors.success.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.success.withOpacity(0.3)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Message employer button
+              if (job.employer != null)
+                SizedBox(
+                  width: double.infinity,
+                  height: 44,
+                  child: OutlinedButton.icon(
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ChatScreen(
+                          receiverId:   job.employer!.id,
+                          receiverName: job.employer!.name,
+                        ),
+                      ),
+                    ),
+                    icon:  const Icon(Icons.chat_outlined, size: 18),
+                    label: Text('Message ${job.employer!.name.split(' ').first}'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      side:    const BorderSide(color: AppColors.primary),
+                      shape:   RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
                   ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.check_circle_rounded, color: AppColors.success, size: 18),
-                      SizedBox(width: 8),
-                      Text('Application Submitted', style: TextStyle(color: AppColors.success, fontWeight: FontWeight.w600)),
-                    ],
-                  ),
-                )
-              : PrimaryButton(
-                  text:      'Apply Now',
-                  isLoading: _isApplying,
-                  onPressed: job.isActive ? _showApplyDialog : null,
                 ),
+              const SizedBox(height: 8),
+              alreadyApplied
+                  ? Container(
+                      height: 50,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color:        AppColors.success.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.success.withOpacity(0.3)),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.check_circle_rounded, color: AppColors.success, size: 18),
+                          SizedBox(width: 8),
+                          Text('Application Submitted', style: TextStyle(color: AppColors.success, fontWeight: FontWeight.w600)),
+                        ],
+                      ),
+                    )
+                  : PrimaryButton(
+                      text:      'Apply Now',
+                      isLoading: _isApplying,
+                      onPressed: job.isActive ? _showApplyDialog : null,
+                    ),
+            ],
+          ),
         ),
       ),
     );

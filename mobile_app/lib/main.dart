@@ -7,6 +7,9 @@ import 'constants/app_theme.dart';
 import 'providers/auth_provider.dart';
 import 'providers/job_provider.dart';
 import 'providers/application_provider.dart';
+import 'providers/saved_job_provider.dart';
+import 'providers/notification_provider.dart';
+import 'providers/chat_provider.dart';
 import 'screens/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/jobseeker/jobseeker_home.dart';
@@ -20,6 +23,9 @@ void main() {
         ChangeNotifierProvider(create: (_) => AuthProvider()..init()),
         ChangeNotifierProvider(create: (_) => JobProvider()),
         ChangeNotifierProvider(create: (_) => ApplicationProvider()),
+        ChangeNotifierProvider(create: (_) => SavedJobProvider()),
+        ChangeNotifierProvider(create: (_) => NotificationProvider()),
+        ChangeNotifierProvider(create: (_) => ChatProvider()),
       ],
       child: const WorkLinkApp(),
     ),

@@ -2,7 +2,7 @@
 
 class AppConstants {
   // ─── API ───────────────────────────────────────────────────────────────────
-  static const String baseUrl = 'https://papaya-corridor-algorithm.ngrok-free.dev/api'; //http://127.0.0.1:5000/api'
+  static const String baseUrl = 'http://127.0.0.1:5000/api';
 
   // Auth
   static const String registerEndpoint  = '/auth/register';

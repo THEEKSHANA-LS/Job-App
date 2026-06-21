@@ -17,7 +17,7 @@ class SplashScreen extends StatelessWidget {
             Icon(Icons.work_rounded, color: Colors.white, size: 64),
             SizedBox(height: 16),
             Text(
-              'WorkLink LK',
+              'PodiWeda-LK',
               style: TextStyle(
                 color:      Colors.white,
                 fontSize:   28,
