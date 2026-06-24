@@ -10,6 +10,7 @@ import 'providers/application_provider.dart';
 import 'providers/saved_job_provider.dart';
 import 'providers/notification_provider.dart';
 import 'providers/chat_provider.dart';
+import 'providers/profile_provider.dart';
 import 'screens/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/jobseeker/jobseeker_home.dart';
@@ -26,6 +27,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => SavedJobProvider()),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
         ChangeNotifierProvider(create: (_) => ChatProvider()),
+        ChangeNotifierProvider(create: (_) => ProfileProvider()),
       ],
       child: const WorkLinkApp(),
     ),
@@ -52,7 +54,6 @@ class _RootRouter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
-
     switch (auth.status) {
       case AuthStatus.initial:
         return const SplashScreen();

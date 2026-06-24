@@ -10,7 +10,6 @@ import '../../services/application_service.dart';
 
 class ApplicantsScreen extends StatefulWidget {
   final JobModel job;
-
   const ApplicantsScreen({super.key, required this.job});
 
   @override
@@ -41,6 +40,8 @@ class _ApplicantsScreenState extends State<ApplicantsScreen> {
       jobId: widget.job.id,
     );
 
+    if (!mounted) return;
+
     if (result['success'] == true) {
       setState(() {
         _applications = result['applications'] as List<ApplicationModel>;
@@ -48,7 +49,7 @@ class _ApplicantsScreenState extends State<ApplicantsScreen> {
       });
     } else {
       setState(() {
-        _error   = result['message'] as String?;
+        _error   = result['message'] as String? ?? 'Failed to load applicants';
         _loading = false;
       });
     }
@@ -65,7 +66,6 @@ class _ApplicantsScreenState extends State<ApplicantsScreen> {
     if (!mounted) return;
 
     if (result['success'] == true) {
-      // Update locally
       setState(() {
         final idx = _applications.indexWhere((a) => a.id == app.id);
         if (idx != -1) {
@@ -101,9 +101,9 @@ class _ApplicantsScreenState extends State<ApplicantsScreen> {
 
   void _showStatusPicker(ApplicationModel app) {
     showModalBottomSheet(
-      context:             context,
-      backgroundColor:     Colors.transparent,
-      isScrollControlled:  true,
+      context:            context,
+      backgroundColor:    Colors.transparent,
+      isScrollControlled: true,
       builder: (_) => Container(
         decoration: const BoxDecoration(
           color:        AppColors.surface,
@@ -111,27 +111,35 @@ class _ApplicantsScreenState extends State<ApplicantsScreen> {
         ),
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize:      MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(
               child: Container(
                 width: 40, height: 4,
-                decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
+                decoration: BoxDecoration(
+                  color:        AppColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
             const SizedBox(height: 20),
             Text(
-              'Update Status — ${app.applicant?.name ?? "Applicant"}',
+              'Update — ${app.applicant?.name ?? "Applicant"}',
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 4),
+            Text(
+              'Current: ${app.status}',
+              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 12),
             ..._statuses.map((s) {
               final isCurrent = app.status == s;
               return ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: CircleAvatar(
-                  radius:          14,
+                  radius:          16,
                   backgroundColor: _statusColor(s).withOpacity(0.15),
                   child: Icon(_statusIcon(s), size: 14, color: _statusColor(s)),
                 ),
@@ -162,12 +170,55 @@ class _ApplicantsScreenState extends State<ApplicantsScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text('Applicants — ${widget.job.title}', overflow: TextOverflow.ellipsis),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Applicants', style: TextStyle(fontSize: 16)),
+            Text(
+              widget.job.title,
+              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w400),
+            ),
+          ],
+        ),
+        actions: [
+          if (_applications.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color:        AppColors.primaryLight,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${_applications.length}',
+                    style: const TextStyle(
+                      color:      AppColors.primary,
+                      fontWeight: FontWeight.w700,
+                      fontSize:   13,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(child: Text(_error!, style: const TextStyle(color: AppColors.error)))
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline_rounded, size: 48, color: AppColors.error),
+                      const SizedBox(height: 12),
+                      Text(_error!, style: const TextStyle(color: AppColors.error)),
+                      const SizedBox(height: 16),
+                      ElevatedButton(onPressed: _fetchApplicants, child: const Text('Retry')),
+                    ],
+                  ),
+                )
               : _applications.isEmpty
                   ? const Center(
                       child: Column(
@@ -195,7 +246,7 @@ class _ApplicantsScreenState extends State<ApplicantsScreen> {
     );
   }
 
-  Color _statusColor(String s) {
+  Color    _statusColor(String s) {
     switch (s) {
       case 'pending':     return AppColors.warning;
       case 'reviewing':   return AppColors.primary;
@@ -218,7 +269,7 @@ class _ApplicantsScreenState extends State<ApplicantsScreen> {
   }
 }
 
-// ── Applicant Card ──────────────────────────────────────────────────────────
+// ── Applicant Card ─────────────────────────────────────────────────────────
 class _ApplicantCard extends StatelessWidget {
   final ApplicationModel app;
   final VoidCallback     onStatusChange;
@@ -252,7 +303,7 @@ class _ApplicantCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Applicant info ────────────────────────────────────────
+          // ── Applicant info ────────────────────────────────────
           Row(
             children: [
               CircleAvatar(
@@ -262,7 +313,11 @@ class _ApplicantCard extends StatelessWidget {
                   applicant?.name.isNotEmpty == true
                       ? applicant!.name[0].toUpperCase()
                       : '?',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.primary),
+                  style: const TextStyle(
+                    fontSize:   16,
+                    fontWeight: FontWeight.w700,
+                    color:      AppColors.primary,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -279,14 +334,19 @@ class _ApplicantCard extends StatelessWidget {
                       style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                     ),
                     if (applicant?.phone != null && applicant!.phone!.isNotEmpty)
-                      Text(
-                        applicant.phone!,
-                        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      Row(
+                        children: [
+                          const Icon(Icons.phone_outlined, size: 11, color: AppColors.textSecondary),
+                          const SizedBox(width: 3),
+                          Text(
+                            applicant.phone!,
+                            style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                          ),
+                        ],
                       ),
                   ],
                 ),
               ),
-              // Status badge
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
@@ -301,7 +361,7 @@ class _ApplicantCard extends StatelessWidget {
             ],
           ),
 
-          // ── Cover letter ──────────────────────────────────────────
+          // ── Cover letter ──────────────────────────────────────
           if (app.coverLetter.isNotEmpty) ...[
             const SizedBox(height: 12),
             Container(
@@ -312,7 +372,11 @@ class _ApplicantCard extends StatelessWidget {
               ),
               child: Text(
                 app.coverLetter,
-                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.5),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color:    AppColors.textSecondary,
+                  height:   1.5,
+                ),
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -323,7 +387,6 @@ class _ApplicantCard extends StatelessWidget {
           const Divider(color: AppColors.divider, height: 1),
           const SizedBox(height: 10),
 
-          // ── Actions ───────────────────────────────────────────────
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -340,10 +403,14 @@ class _ApplicantCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.edit_rounded, size: 13, color: AppColors.primary),
                       SizedBox(width: 4),
-                      Text('Update Status', style: TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600)),
+                      Text(
+                        'Update Status',
+                        style: TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600),
+                      ),
                     ],
                   ),
                 ),

@@ -3,9 +3,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../constants/app_theme.dart';
+import '../../constants/app_constants.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
-import '../../constants/app_constants.dart';
 
 class AdminHome extends StatefulWidget {
   const AdminHome({super.key});
@@ -16,10 +16,12 @@ class AdminHome extends StatefulWidget {
 
 class _AdminHomeState extends State<AdminHome> {
   Map<String, dynamic>? _stats;
-  List<dynamic>         _users   = [];
+  List<dynamic>         _users       = [];
   bool _loadingStats = true;
   bool _loadingUsers = true;
-  int  _tab          = 0;
+  String? _statsError;
+  String? _usersError;
+  int  _tab = 0;
 
   @override
   void initState() {
@@ -29,23 +31,39 @@ class _AdminHomeState extends State<AdminHome> {
   }
 
   Future<void> _fetchStats() async {
-    setState(() => _loadingStats = true);
+    setState(() { _loadingStats = true; _statsError = null; });
     final token    = context.read<AuthProvider>().user?.token ?? '';
     final response = await ApiService.get(AppConstants.adminStatsEndpoint, token: token);
+    if (!mounted) return;
     if (response.success && response.data != null) {
-      setState(() { _stats = response.data!['data'] as Map<String, dynamic>; });
+      setState(() {
+        _stats        = response.data!['data'] as Map<String, dynamic>;
+        _loadingStats = false;
+      });
+    } else {
+      setState(() {
+        _statsError   = response.message;
+        _loadingStats = false;
+      });
     }
-    setState(() => _loadingStats = false);
   }
 
   Future<void> _fetchUsers() async {
-    setState(() => _loadingUsers = true);
+    setState(() { _loadingUsers = true; _usersError = null; });
     final token    = context.read<AuthProvider>().user?.token ?? '';
     final response = await ApiService.get(AppConstants.adminUsersEndpoint, token: token);
+    if (!mounted) return;
     if (response.success && response.data != null) {
-      setState(() { _users = response.data!['data'] as List<dynamic>; });
+      setState(() {
+        _users        = response.data!['data'] as List<dynamic>;
+        _loadingUsers = false;
+      });
+    } else {
+      setState(() {
+        _usersError   = response.message;
+        _loadingUsers = false;
+      });
     }
-    setState(() => _loadingUsers = false);
   }
 
   Future<void> _deleteUser(String userId, String name) async {
@@ -54,12 +72,15 @@ class _AdminHomeState extends State<AdminHome> {
       builder: (_) => AlertDialog(
         shape:   RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title:   const Text('Delete User'),
-        content: Text('Delete user "$name"? This cannot be undone.'),
+        content: Text('Delete "$name"? This cannot be undone.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child:     const Text('Cancel'),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete', style: TextStyle(color: AppColors.error)),
+            child:     const Text('Delete', style: TextStyle(color: AppColors.error)),
           ),
         ],
       ),
@@ -67,7 +88,10 @@ class _AdminHomeState extends State<AdminHome> {
     if (confirmed != true || !mounted) return;
 
     final token    = context.read<AuthProvider>().user?.token ?? '';
-    final response = await ApiService.delete('${AppConstants.adminUsersEndpoint}/$userId', token: token);
+    final response = await ApiService.delete(
+      '${AppConstants.adminUsersEndpoint}/$userId',
+      token: token,
+    );
 
     if (!mounted) return;
     if (response.success) {
@@ -81,6 +105,15 @@ class _AdminHomeState extends State<AdminHome> {
         ),
       );
       _fetchStats();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:         Text(response.message.isNotEmpty ? response.message : 'Failed to delete'),
+          backgroundColor: AppColors.error,
+          behavior:        SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
     }
   }
 
@@ -94,13 +127,14 @@ class _AdminHomeState extends State<AdminHome> {
           IconButton(
             icon:      const Icon(Icons.logout_rounded),
             color:     AppColors.error,
+            tooltip:   'Logout',
             onPressed: () => context.read<AuthProvider>().logout(),
           ),
         ],
       ),
       body: Column(
         children: [
-          // ── Tab bar ─────────────────────────────────────────────────
+          // ── Tab bar ───────────────────────────────────────────────
           Container(
             color: AppColors.surface,
             child: Row(
@@ -110,7 +144,6 @@ class _AdminHomeState extends State<AdminHome> {
               ],
             ),
           ),
-
           Expanded(
             child: _tab == 0 ? _buildOverview() : _buildUsers(),
           ),
@@ -119,11 +152,26 @@ class _AdminHomeState extends State<AdminHome> {
     );
   }
 
-  // ── Overview ─────────────────────────────────────────────────────────────
+  // ── Overview tab ──────────────────────────────────────────────────────────
   Widget _buildOverview() {
     if (_loadingStats) return const Center(child: CircularProgressIndicator());
 
-    final s = _stats;
+    if (_statsError != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline_rounded, size: 48, color: AppColors.error),
+            const SizedBox(height: 12),
+            Text(_statsError!, style: const TextStyle(color: AppColors.error)),
+            const SizedBox(height: 16),
+            ElevatedButton(onPressed: _fetchStats, child: const Text('Retry')),
+          ],
+        ),
+      );
+    }
+
+    final s = _stats ?? {};
 
     return RefreshIndicator(
       onRefresh: _fetchStats,
@@ -133,14 +181,14 @@ class _AdminHomeState extends State<AdminHome> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Banner ─────────────────────────────────────────────
+            // Banner
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   colors: [Color(0xFF7C3AED), Color(0xFF6D28D9)],
-                  begin: Alignment.topLeft,
-                  end:   Alignment.bottomRight,
+                  begin:  Alignment.topLeft,
+                  end:    Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -150,9 +198,12 @@ class _AdminHomeState extends State<AdminHome> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Platform Overview', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+                        Text(
+                          'Platform Overview',
+                          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
+                        ),
                         SizedBox(height: 4),
-                        Text('WorkLink LK Admin', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                        Text('PodiWeda-LK Admin', style: TextStyle(color: Colors.white70, fontSize: 13)),
                       ],
                     ),
                   ),
@@ -162,10 +213,9 @@ class _AdminHomeState extends State<AdminHome> {
             ),
 
             const SizedBox(height: 20),
-
-            // ── Stats grid ────────────────────────────────────────
             const Text('Platform Stats', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
             const SizedBox(height: 12),
+
             GridView.count(
               crossAxisCount:   2,
               shrinkWrap:       true,
@@ -174,33 +224,32 @@ class _AdminHomeState extends State<AdminHome> {
               mainAxisSpacing:  12,
               childAspectRatio: 1.2,
               children: [
-                _StatCard(label: 'Total Users',    value: '${s?['totalUsers'] ?? '—'}',       color: AppColors.primary,   icon: Icons.people_alt_rounded),
-                _StatCard(label: 'Total Jobs',     value: '${s?['totalJobs'] ?? '—'}',        color: AppColors.secondary, icon: Icons.work_rounded),
-                _StatCard(label: 'Applications',   value: '${s?['totalApplications'] ?? '—'}', color: AppColors.accent,   icon: Icons.assignment_rounded),
-                _StatCard(label: 'Active Jobs',    value: '${s?['activeJobs'] ?? '—'}',       color: AppColors.success,   icon: Icons.check_circle_rounded),
+                _StatCard(label: 'Total Users',   value: '${s['totalUsers'] ?? 0}',        color: AppColors.primary,   icon: Icons.people_alt_rounded),
+                _StatCard(label: 'Total Jobs',    value: '${s['totalJobs'] ?? 0}',         color: AppColors.secondary, icon: Icons.work_rounded),
+                _StatCard(label: 'Applications',  value: '${s['totalApplications'] ?? 0}', color: AppColors.accent,    icon: Icons.assignment_rounded),
+                _StatCard(label: 'Active Jobs',   value: '${s['activeJobs'] ?? 0}',        color: AppColors.success,   icon: Icons.check_circle_rounded),
               ],
             ),
 
             const SizedBox(height: 20),
-
-            // ── Breakdown ─────────────────────────────────────────
             const Text('User Breakdown', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
             const SizedBox(height: 12),
+
             Row(
               children: [
                 Expanded(
                   child: _BreakdownCard(
                     label: 'Job Seekers',
-                    value: '${s?['jobseekers'] ?? '—'}',
+                    value: '${s['jobseekers'] ?? 0}',
                     icon:  Icons.person_search_rounded,
                     color: AppColors.primary,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
                   child: _BreakdownCard(
                     label: 'Employers',
-                    value: '${s?['employers'] ?? '—'}',
+                    value: '${s['employers'] ?? 0}',
                     icon:  Icons.business_center_rounded,
                     color: AppColors.secondary,
                   ),
@@ -213,9 +262,30 @@ class _AdminHomeState extends State<AdminHome> {
     );
   }
 
-  // ── Users list ────────────────────────────────────────────────────────────
+  // ── Users tab ─────────────────────────────────────────────────────────────
   Widget _buildUsers() {
     if (_loadingUsers) return const Center(child: CircularProgressIndicator());
+
+    if (_usersError != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline_rounded, size: 48, color: AppColors.error),
+            const SizedBox(height: 12),
+            Text(_usersError!, style: const TextStyle(color: AppColors.error)),
+            const SizedBox(height: 16),
+            ElevatedButton(onPressed: _fetchUsers, child: const Text('Retry')),
+          ],
+        ),
+      );
+    }
+
+    if (_users.isEmpty) {
+      return const Center(
+        child: Text('No users found', style: TextStyle(color: AppColors.textSecondary)),
+      );
+    }
 
     return RefreshIndicator(
       onRefresh: _fetchUsers,
@@ -224,7 +294,9 @@ class _AdminHomeState extends State<AdminHome> {
         itemCount: _users.length,
         itemBuilder: (_, i) {
           final u    = _users[i] as Map<String, dynamic>;
-          final role = u['role'] as String? ?? '';
+          final role = u['role'] as String? ?? 'jobseeker';
+          final name = u['name'] as String? ?? '?';
+
           return Container(
             margin:  const EdgeInsets.only(bottom: 10),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -239,7 +311,7 @@ class _AdminHomeState extends State<AdminHome> {
                   radius:          20,
                   backgroundColor: _roleColor(role).withOpacity(0.15),
                   child: Text(
-                    (u['name'] as String? ?? '?')[0].toUpperCase(),
+                    name[0].toUpperCase(),
                     style: TextStyle(fontWeight: FontWeight.w700, color: _roleColor(role)),
                   ),
                 ),
@@ -248,8 +320,14 @@ class _AdminHomeState extends State<AdminHome> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(u['name'] ?? '', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                      Text(u['email'] ?? '', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                      Text(
+                        name,
+                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                      ),
+                      Text(
+                        u['email'] as String? ?? '',
+                        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      ),
                     ],
                   ),
                 ),
@@ -259,15 +337,25 @@ class _AdminHomeState extends State<AdminHome> {
                     color:        _roleColor(role).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Text(role, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: _roleColor(role))),
-                ),
-                const SizedBox(width: 8),
-                if (role != 'admin')
-                  IconButton(
-                    icon:    const Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 20),
-                    onPressed: () => _deleteUser(u['_id'] as String, u['name'] as String? ?? ''),
-                    tooltip: 'Delete user',
+                  child: Text(
+                    role,
+                    style: TextStyle(
+                      fontSize:   10,
+                      fontWeight: FontWeight.w600,
+                      color:      _roleColor(role),
+                    ),
                   ),
+                ),
+                if (role != 'admin') ...[
+                  const SizedBox(width: 6),
+                  IconButton(
+                    icon:      const Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 20),
+                    onPressed: () => _deleteUser(u['_id'] as String, name),
+                    tooltip:   'Delete user',
+                    padding:   EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  ),
+                ],
               ],
             ),
           );
@@ -278,14 +366,14 @@ class _AdminHomeState extends State<AdminHome> {
 
   Color _roleColor(String role) {
     switch (role) {
-      case 'admin':     return const Color(0xFF7C3AED);
-      case 'employer':  return AppColors.secondary;
-      default:          return AppColors.primary;
+      case 'admin':    return const Color(0xFF7C3AED);
+      case 'employer': return AppColors.secondary;
+      default:         return AppColors.primary;
     }
   }
 }
 
-// ── Widgets ────────────────────────────────────────────────────────────────
+// ── Shared widgets ─────────────────────────────────────────────────────────
 class _TabBtn extends StatelessWidget {
   final String       label;
   final bool         selected;
@@ -365,7 +453,7 @@ class _BreakdownCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color:        color.withOpacity(0.06),
         borderRadius: BorderRadius.circular(12),

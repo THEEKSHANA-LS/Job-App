@@ -35,6 +35,11 @@ class AppConstants {
   static const String adminStatsEndpoint = '/admin/stats';
   static const String adminUsersEndpoint = '/admin/users';
 
+  // User
+  static const String userProfileEndpoint = '/users/profile';
+  static const String uploadCvEndpoint = '/users/upload-cv';
+
+
   // ─── Local Storage Keys ────────────────────────────────────────────────────
   static const String tokenKey    = 'auth_token';
   static const String userKey     = 'auth_user';

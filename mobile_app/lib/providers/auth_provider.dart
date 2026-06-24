@@ -125,4 +125,10 @@ class AuthProvider extends ChangeNotifier {
     }
     notifyListeners();
   }
+
+  /// Called by ProfileProvider after a successful profile/skills/CV update
+  void updateUser(UserModel user) {
+    _user = user;
+    notifyListeners();
+  }
 }

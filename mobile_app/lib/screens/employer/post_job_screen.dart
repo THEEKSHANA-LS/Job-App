@@ -9,22 +9,25 @@ import '../../widgets/custom_text_field.dart';
 import '../../widgets/primary_button.dart';
 
 class PostJobScreen extends StatefulWidget {
-  const PostJobScreen({super.key});
+  /// isTab = true when embedded inside IndexedStack (no Navigator.pop)
+  final bool isTab;
+  const PostJobScreen({super.key, this.isTab = false});
 
   @override
   State<PostJobScreen> createState() => _PostJobScreenState();
 }
 
 class _PostJobScreenState extends State<PostJobScreen> {
-  final _formKey     = GlobalKey<FormState>();
-  final _titleCtrl   = TextEditingController();
-  final _descCtrl    = TextEditingController();
-  final _salaryCtrl  = TextEditingController();
+  final _formKey      = GlobalKey<FormState>();
+  final _titleCtrl    = TextEditingController();
+  final _descCtrl     = TextEditingController();
+  final _salaryCtrl   = TextEditingController();
   final _locationCtrl = TextEditingController();
 
-  String _category = 'it';
-  String _jobType  = 'part-time';
+  String _category  = 'it';
+  String _jobType   = 'part-time';
   bool   _isPosting = false;
+  bool   _posted    = false;   // shows success banner in tab mode
 
   static const _categories = [
     'it', 'design', 'writing', 'delivery', 'retail', 'cashier', 'tutor', 'other',
@@ -42,10 +45,22 @@ class _PostJobScreenState extends State<PostJobScreen> {
     super.dispose();
   }
 
+  void _resetForm() {
+    _formKey.currentState?.reset();
+    _titleCtrl.clear();
+    _descCtrl.clear();
+    _salaryCtrl.clear();
+    _locationCtrl.clear();
+    setState(() {
+      _category = 'it';
+      _jobType  = 'part-time';
+      _posted   = false;
+    });
+  }
+
   Future<void> _postJob() async {
     if (!_formKey.currentState!.validate()) return;
-
-    setState(() => _isPosting = true);
+    setState(() { _isPosting = true; _posted = false; });
 
     final token   = context.read<AuthProvider>().user?.token ?? '';
     final success = await context.read<JobProvider>().createJob(
@@ -59,23 +74,30 @@ class _PostJobScreenState extends State<PostJobScreen> {
     );
 
     setState(() => _isPosting = false);
-
     if (!mounted) return;
 
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content:         const Text('🎉 Job posted successfully!'),
-          backgroundColor: AppColors.success,
-          behavior:        SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      );
-      Navigator.pop(context);
+      if (widget.isTab) {
+        // Show inline success then reset
+        setState(() => _posted = true);
+        await Future.delayed(const Duration(seconds: 2));
+        if (mounted) _resetForm();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:         const Text('🎉 Job posted successfully!'),
+            backgroundColor: AppColors.success,
+            behavior:        SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+        Navigator.pop(context);
+      }
     } else {
+      final err = context.read<JobProvider>().errorMessage ?? 'Failed to post job';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content:         Text(context.read<JobProvider>().errorMessage ?? 'Failed to post job'),
+          content:         Text(err),
           backgroundColor: AppColors.error,
           behavior:        SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -89,8 +111,9 @@ class _PostJobScreenState extends State<PostJobScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Post a Job'),
-        leading: IconButton(
+        title:                     const Text('Post a Job'),
+        automaticallyImplyLeading: !widget.isTab,
+        leading: widget.isTab ? null : IconButton(
           icon:      const Icon(Icons.arrow_back_ios_rounded),
           onPressed: () => Navigator.pop(context),
         ),
@@ -103,7 +126,32 @@ class _PostJobScreenState extends State<PostJobScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
 
-              // ── Title ────────────────────────────────────────────────
+              // ── Success banner (tab mode only) ───────────────────
+              if (_posted) ...[
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  margin:  const EdgeInsets.only(bottom: 20),
+                  decoration: BoxDecoration(
+                    color:        AppColors.success.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.success.withOpacity(0.3)),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.check_circle_rounded, color: AppColors.success),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Job posted successfully! Resetting form...',
+                          style: TextStyle(color: AppColors.success, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
+              // ── Title ───────────────────────────────────────────
               CustomTextField(
                 label:      'Job Title',
                 hint:       'e.g. Flutter Developer',
@@ -111,10 +159,9 @@ class _PostJobScreenState extends State<PostJobScreen> {
                 prefixIcon: Icons.title_rounded,
                 validator:  (v) => v == null || v.isEmpty ? 'Title is required' : null,
               ),
-
               const SizedBox(height: 16),
 
-              // ── Description ──────────────────────────────────────────
+              // ── Description ─────────────────────────────────────
               CustomTextField(
                 label:      'Job Description',
                 hint:       'Describe the role, responsibilities, requirements...',
@@ -123,10 +170,9 @@ class _PostJobScreenState extends State<PostJobScreen> {
                 prefixIcon: Icons.description_outlined,
                 validator:  (v) => v == null || v.isEmpty ? 'Description is required' : null,
               ),
-
               const SizedBox(height: 16),
 
-              // ── Salary ───────────────────────────────────────────────
+              // ── Salary ──────────────────────────────────────────
               CustomTextField(
                 label:        'Salary (LKR)',
                 hint:         'e.g. 50000',
@@ -139,10 +185,9 @@ class _PostJobScreenState extends State<PostJobScreen> {
                   return null;
                 },
               ),
-
               const SizedBox(height: 16),
 
-              // ── Location ─────────────────────────────────────────────
+              // ── Location ────────────────────────────────────────
               CustomTextField(
                 label:      'Location',
                 hint:       'e.g. Colombo, Negombo',
@@ -150,11 +195,10 @@ class _PostJobScreenState extends State<PostJobScreen> {
                 prefixIcon: Icons.location_on_outlined,
                 validator:  (v) => v == null || v.isEmpty ? 'Location is required' : null,
               ),
-
               const SizedBox(height: 20),
 
-              // ── Category ─────────────────────────────────────────────
-              _SectionLabel(label: 'Category'),
+              // ── Category ────────────────────────────────────────
+              const _SectionLabel(label: 'Category'),
               const SizedBox(height: 10),
               Wrap(
                 spacing: 8, runSpacing: 8,
@@ -164,11 +208,10 @@ class _PostJobScreenState extends State<PostJobScreen> {
                   onTap:    () => setState(() => _category = c),
                 )).toList(),
               ),
-
               const SizedBox(height: 20),
 
-              // ── Job Type ─────────────────────────────────────────────
-              _SectionLabel(label: 'Job Type'),
+              // ── Job Type ────────────────────────────────────────
+              const _SectionLabel(label: 'Job Type'),
               const SizedBox(height: 10),
               Wrap(
                 spacing: 8, runSpacing: 8,
@@ -178,16 +221,14 @@ class _PostJobScreenState extends State<PostJobScreen> {
                   onTap:    () => setState(() => _jobType = t),
                 )).toList(),
               ),
-
               const SizedBox(height: 32),
 
-              // ── Submit ───────────────────────────────────────────────
+              // ── Submit ──────────────────────────────────────────
               PrimaryButton(
                 text:      'Post Job',
                 isLoading: _isPosting,
                 onPressed: _postJob,
               ),
-
               const SizedBox(height: 20),
             ],
           ),
@@ -205,7 +246,11 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label,
-      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+      style: const TextStyle(
+        fontSize:   13,
+        fontWeight: FontWeight.w600,
+        color:      AppColors.textPrimary,
+      ),
     );
   }
 }

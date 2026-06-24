@@ -1,14 +1,14 @@
 // lib/screens/employer/my_jobs_screen.dart
 
 import 'package:flutter/material.dart';
-import 'package:mobile_app/screens/employer/applicants_screen.dart';
-import 'package:mobile_app/screens/employer/post_job_screen.dart';
 import 'package:provider/provider.dart';
 import '../../constants/app_theme.dart';
 import '../../models/job_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/job_provider.dart';
 import '../../services/job_service.dart';
+import 'post_job_screen.dart';
+import 'applicants_screen.dart';
 
 class MyJobsScreen extends StatefulWidget {
   const MyJobsScreen({super.key});
@@ -20,28 +20,36 @@ class MyJobsScreen extends StatefulWidget {
 class _MyJobsScreenState extends State<MyJobsScreen> {
   List<JobModel> _myJobs  = [];
   bool           _loading = true;
+  String?        _error;
 
   @override
   void initState() {
     super.initState();
-    _fetchMyJobs();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _fetchMyJobs());
   }
 
   Future<void> _fetchMyJobs() async {
-    setState(() => _loading = true);
-    final token  = context.read<AuthProvider>().user?.token ?? '';
-    final userId = context.read<AuthProvider>().user?.id ?? '';
+    setState(() { _loading = true; _error = null; });
 
-    // Fetch all jobs then filter by employer id
+    final user   = context.read<AuthProvider>().user;
+    final userId = user?.id ?? '';
+
     final result = await JobService.getAllJobs();
+
+    if (!mounted) return;
+
     if (result['success'] == true) {
       final all = result['jobs'] as List<JobModel>;
       setState(() {
+        // Filter to only this employer's jobs
         _myJobs  = all.where((j) => j.employer?.id == userId).toList();
         _loading = false;
       });
     } else {
-      setState(() => _loading = false);
+      setState(() {
+        _error   = result['message'] as String? ?? 'Failed to load jobs';
+        _loading = false;
+      });
     }
   }
 
@@ -49,17 +57,17 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Delete Job'),
+        shape:   RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title:   const Text('Delete Job'),
         content: Text('Delete "${job.title}"? This cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child:     const Text('Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete', style: TextStyle(color: AppColors.error)),
+            child:     const Text('Delete', style: TextStyle(color: AppColors.error)),
           ),
         ],
       ),
@@ -72,25 +80,32 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
       jobId: job.id,
     );
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content:         Text(success ? 'Job deleted' : 'Failed to delete'),
-          backgroundColor: success ? AppColors.success : AppColors.error,
-          behavior:        SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      );
-      if (success) _fetchMyJobs();
-    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content:         Text(success ? 'Job deleted' : 'Failed to delete'),
+        backgroundColor: success ? AppColors.success : AppColors.error,
+        behavior:        SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+    if (success) _fetchMyJobs();
   }
 
   Future<void> _toggleActive(JobModel job) async {
-    final token = context.read<AuthProvider>().user?.token ?? '';
+    final token  = context.read<AuthProvider>().user?.token ?? '';
     final result = await JobService.updateJob(
       token: token,
       jobId: job.id,
-      data:  {'isActive': !job.isActive},
+      data:  {
+        'title':       job.title,
+        'description': job.description,
+        'category':    job.category,
+        'jobType':     job.jobType,
+        'salary':      job.salary,
+        'location':    job.location,
+        'isActive':    !job.isActive,
+      },
     );
     if (result['success'] == true && mounted) _fetchMyJobs();
   }
@@ -100,7 +115,29 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('My Job Listings'),
+        title: Row(
+          children: [
+            const Text('My Job Listings'),
+            if (_myJobs.isNotEmpty) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color:        AppColors.primaryLight,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '${_myJobs.length}',
+                  style: const TextStyle(
+                    fontSize:   12,
+                    color:      AppColors.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
         actions: [
           IconButton(
             icon:      const Icon(Icons.add_circle_outline_rounded),
@@ -116,60 +153,64 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const PostJobScreen()),
-          );
-          _fetchMyJobs();
-        },
-        backgroundColor: AppColors.primary,
-        icon:  const Icon(Icons.add_rounded, color: Colors.white),
-        label: const Text('Post Job', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : _myJobs.isEmpty
+          : _error != null
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.work_off_rounded, size: 64, color: AppColors.textHint),
+                      const Icon(Icons.error_outline_rounded, size: 48, color: AppColors.error),
+                      const SizedBox(height: 12),
+                      Text(_error!, style: const TextStyle(color: AppColors.error)),
                       const SizedBox(height: 16),
-                      const Text('No jobs posted yet', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 8),
-                      const Text('Tap + to post your first job', style: TextStyle(color: AppColors.textSecondary)),
-                      const SizedBox(height: 20),
-                      ElevatedButton.icon(
-                        onPressed: () async {
-                          await Navigator.push(context, MaterialPageRoute(builder: (_) => const PostJobScreen()));
-                          _fetchMyJobs();
-                        },
-                        icon:  const Icon(Icons.add_rounded),
-                        label: const Text('Post a Job'),
-                      ),
+                      ElevatedButton(onPressed: _fetchMyJobs, child: const Text('Retry')),
                     ],
                   ),
                 )
-              : RefreshIndicator(
-                  onRefresh: _fetchMyJobs,
-                  child: ListView.builder(
-                    padding:   const EdgeInsets.fromLTRB(16, 12, 16, 100),
-                    itemCount: _myJobs.length,
-                    itemBuilder: (_, i) => _EmployerJobCard(
-                      job:          _myJobs[i],
-                      onDelete:     () => _deleteJob(_myJobs[i]),
-                      onToggle:     () => _toggleActive(_myJobs[i]),
-                      onApplicants: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ApplicantsScreen(job: _myJobs[i]),
+              : _myJobs.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.work_off_rounded, size: 64, color: AppColors.textHint),
+                          const SizedBox(height: 16),
+                          const Text('No jobs posted yet', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 8),
+                          const Text('Tap + or go to Post Job tab', style: TextStyle(color: AppColors.textSecondary)),
+                          const SizedBox(height: 20),
+                          ElevatedButton.icon(
+                            onPressed: () async {
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const PostJobScreen()),
+                              );
+                              _fetchMyJobs();
+                            },
+                            icon:  const Icon(Icons.add_rounded),
+                            label: const Text('Post a Job'),
+                          ),
+                        ],
+                      ),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: _fetchMyJobs,
+                      child: ListView.builder(
+                        padding:   const EdgeInsets.fromLTRB(16, 12, 16, 100),
+                        itemCount: _myJobs.length,
+                        itemBuilder: (_, i) => _EmployerJobCard(
+                          job:          _myJobs[i],
+                          onDelete:     () => _deleteJob(_myJobs[i]),
+                          onToggle:     () => _toggleActive(_myJobs[i]),
+                          onApplicants: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ApplicantsScreen(job: _myJobs[i]),
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
     );
   }
 }
@@ -198,22 +239,29 @@ class _EmployerJobCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         border:       Border.all(color: AppColors.border),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6, offset: const Offset(0, 2)),
+          BoxShadow(
+            color:      Colors.black.withOpacity(0.03),
+            blurRadius: 6,
+            offset:     const Offset(0, 2),
+          ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Top row ────────────────────────────────────────────────
+          // ── Top row ──────────────────────────────────────────────
           Row(
             children: [
               Expanded(
                 child: Text(
                   job.title,
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                  style: const TextStyle(
+                    fontSize:   15,
+                    fontWeight: FontWeight.w700,
+                    color:      AppColors.textPrimary,
+                  ),
                 ),
               ),
-              // Active toggle
               GestureDetector(
                 onTap: onToggle,
                 child: Container(
@@ -248,15 +296,16 @@ class _EmployerJobCard extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
 
-          // ── Meta ───────────────────────────────────────────────────
+          // ── Meta ─────────────────────────────────────────────────
           Wrap(
-            spacing: 12,
+            spacing: 14, runSpacing: 6,
             children: [
-              _Meta(icon: Icons.location_on_outlined,   text: job.location),
-              _Meta(icon: Icons.schedule_rounded,        text: job.jobType),
-              _Meta(icon: Icons.payments_outlined,       text: 'LKR ${job.salary.toStringAsFixed(0)}'),
+              _Meta(icon: Icons.location_on_outlined, text: job.location),
+              _Meta(icon: Icons.schedule_rounded,      text: job.jobType),
+              _Meta(icon: Icons.payments_outlined,     text: 'LKR ${job.salary.toStringAsFixed(0)}'),
+              _Meta(icon: Icons.category_outlined,     text: job.category),
             ],
           ),
 
@@ -264,10 +313,9 @@ class _EmployerJobCard extends StatelessWidget {
           const Divider(color: AppColors.divider, height: 1),
           const SizedBox(height: 10),
 
-          // ── Actions row ────────────────────────────────────────────
+          // ── Actions ───────────────────────────────────────────────
           Row(
             children: [
-              // View Applicants
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: onApplicants,
@@ -282,7 +330,6 @@ class _EmployerJobCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              // Delete
               OutlinedButton.icon(
                 onPressed: onDelete,
                 icon:  const Icon(Icons.delete_outline_rounded, size: 16),
@@ -305,7 +352,6 @@ class _EmployerJobCard extends StatelessWidget {
 class _Meta extends StatelessWidget {
   final IconData icon;
   final String   text;
-
   const _Meta({required this.icon, required this.text});
 
   @override
