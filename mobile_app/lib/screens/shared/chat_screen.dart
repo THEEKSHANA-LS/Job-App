@@ -59,13 +59,19 @@ class _ChatScreenState extends State<ChatScreen> {
 
     if (conv == null || !mounted) return;
 
-    // Identify the other participant
-    _otherUserId = conv.participants
-        .firstWhere(
-          (p) => p.id != myId,
-          orElse: () => conv!.participants.first,
-        )
-        .id;
+    // Identify the other participant safely
+    final others = conv.participants.where((p) => p.id != myId).toList();
+    if (others.isNotEmpty) {
+      _otherUserId = others.first.id;
+    } else if (conv.participants.isNotEmpty) {
+      // Fallback: use first participant (e.g. talking to yourself in dev)
+      _otherUserId = conv.participants.first.id;
+    } else {
+      // No participants at all — use the receiverId we started with
+      _otherUserId = widget.receiverId;
+    }
+
+    if (_otherUserId == null || !mounted) return;
 
     await chat.loadMessages(
       token:          token,

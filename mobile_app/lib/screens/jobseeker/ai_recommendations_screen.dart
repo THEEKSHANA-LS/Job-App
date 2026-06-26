@@ -143,31 +143,68 @@ class _AiRecommendationsScreenState extends State<AiRecommendationsScreen> {
   }
 
   Widget _buildError() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline_rounded, size: 56, color: AppColors.error),
-            const SizedBox(height: 16),
-            const Text('Could not load recommendations',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            Text(_error!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: _fetchRecommendations,
-              icon:      const Icon(Icons.refresh_rounded),
-              label:     const Text('Try Again'),
+  final isAiBusy =
+      _error?.toLowerCase().contains('503') == true ||
+      _error?.toLowerCase().contains('overloaded') == true ||
+      _error?.toLowerCase().contains('service unavailable') == true ||
+      _error?.toLowerCase().contains('model is overloaded') == true;
+
+  return Center(
+    child: Padding(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            isAiBusy
+                ? Icons.hourglass_top_rounded
+                : Icons.error_outline_rounded,
+            size: 64,
+            color: isAiBusy
+                ? Colors.orange
+                : AppColors.error,
+          ),
+
+          const SizedBox(height: 20),
+
+          Text(
+            isAiBusy
+                ? 'AI Service is Busy'
+                : 'Could not load recommendations',
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
             ),
-          ],
-        ),
+          ),
+
+          const SizedBox(height: 10),
+
+          Text(
+            isAiBusy
+                ? 'Our AI provider is currently experiencing high traffic. Please wait a moment and try again.'
+                : (_error ?? 'Unknown error occurred'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 13,
+              height: 1.5,
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          ElevatedButton.icon(
+            onPressed: _fetchRecommendations,
+            icon: const Icon(Icons.refresh_rounded),
+            label: Text(
+              isAiBusy ? 'Retry' : 'Try Again',
+            ),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildNoSkills() {
     return Center(

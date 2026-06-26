@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../constants/app_theme.dart';
 import '../../providers/job_provider.dart';
-import '../../providers/auth_provider.dart';
+
 import '../../widgets/job_card.dart';
 import 'job_detail_screen.dart';
 
