@@ -1,8 +1,13 @@
+// src/server.js
+// Replace your entire existing server.js with this file
+
 import dotenv from "dotenv";
 dotenv.config();
 
 import app from "./app.js";
 import connectDB from "./config/db.js";
+import Conversation from "./models/Conversation.js";
+import Message from "./models/Message.js";
 
 import { createServer } from "http";
 import { Server } from "socket.io";
@@ -12,9 +17,7 @@ connectDB();
 const httpServer = createServer(app);
 
 const io = new Server(httpServer, {
-  cors: {
-    origin: "*",
-  },
+  cors: { origin: "*" },
 });
 
 io.on("connection", (socket) => {
@@ -26,22 +29,51 @@ io.on("connection", (socket) => {
     console.log(`User joined room: ${roomId}`);
   });
 
-  // Send message
-  socket.on("send_message", (data) => {
-    const { senderId, receiverId, message } = data;
+  // Send message — now persists to DB before broadcasting
+  socket.on("send_message", async (data) => {
+    try {
+      const { senderId, receiverId, message } = data;
 
-    // Create consistent room ID (VERY IMPORTANT FIX)
-    const roomId = [senderId, receiverId].sort().join("_");
+      // Consistent room ID
+      const roomId = [senderId, receiverId].sort().join("_");
 
-    io.to(roomId).emit("receive_message", {
-      senderId,
-      receiverId,
-      message,
-      createdAt: new Date(),
-    });
+      // Find or create the conversation between these two users
+      let conversation = await Conversation.findOne({
+        participants: { $all: [senderId, receiverId] },
+      });
+
+      if (!conversation) {
+        conversation = await Conversation.create({
+          participants: [senderId, receiverId],
+        });
+      }
+
+      // Persist the message
+      const savedMessage = await Message.create({
+        conversation: conversation._id,
+        sender: senderId,
+        text: message,
+      });
+
+      // Touch conversation's updatedAt for sorting in conversation list
+      conversation.updatedAt = new Date();
+      await conversation.save();
+
+      // Broadcast to the room (both users, if both have joined)
+      io.to(roomId).emit("receive_message", {
+        _id: savedMessage._id,
+        conversation: conversation._id,
+        senderId,
+        receiverId,
+        message,
+        createdAt: savedMessage.createdAt,
+      });
+    } catch (error) {
+      console.error("❌ send_message error:", error.message);
+      socket.emit("message_error", { message: "Failed to send message" });
+    }
   });
 
-  // Disconnect
   socket.on("disconnect", () => {
     console.log("❌ User disconnected:", socket.id);
   });
