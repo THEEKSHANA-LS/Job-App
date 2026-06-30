@@ -9,6 +9,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/saved_job_provider.dart';
 import '../../widgets/primary_button.dart';
 import '../shared/chat_screen.dart';
+import '../shared/employer_reviews_screen.dart';
 
 class JobDetailScreen extends StatefulWidget {
   final JobModel job;
@@ -36,9 +37,9 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
             bottom: MediaQuery.of(ctx).viewInsets.bottom,
           ),
           child: Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color:        AppColors.surface,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             ),
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
             child: Column(
@@ -62,7 +63,7 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
                 const SizedBox(height: 4),
                 Text(
                   widget.job.employer?.name ?? '',
-                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
                 ),
                 const SizedBox(height: 16),
                 TextField(
@@ -212,7 +213,7 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
                             const SizedBox(height: 4),
                             Text(
                               job.employer?.name ?? '—',
-                              style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
                             ),
                           ],
                         ),
@@ -235,7 +236,7 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Salary', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                          Text('Salary', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                           Text(
                             'LKR ${job.salary.toStringAsFixed(0)}',
                             style: const TextStyle(
@@ -284,7 +285,7 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
               ),
               child: Text(
                 job.description,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   color:    AppColors.textSecondary,
                   height:   1.6,
@@ -296,39 +297,78 @@ class _JobDetailScreenState extends State<JobDetailScreen> {
 
             // ── Employer info ────────────────────────────────────────
             if (job.employer != null) ...[
-              const Text('About the Employer', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color:        AppColors.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border:       Border.all(color: AppColors.border),
-                ),
-                child: Row(
-                  children: [
-                    const CircleAvatar(
-                      radius:          22,
-                      backgroundColor: AppColors.primaryLight,
-                      child: Icon(Icons.business_rounded, color: AppColors.primary),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            job.employer!.name,
-                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                          ),
-                          Text(
-                            job.employer!.email,
-                            style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
-                          ),
-                        ],
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('About the Employer', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                  GestureDetector(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => EmployerReviewsScreen(
+                          employerId:   job.employer!.id,
+                          employerName: job.employer!.name,
+                        ),
                       ),
                     ),
-                  ],
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.star_rounded, size: 16, color: AppColors.accent),
+                        SizedBox(width: 3),
+                        Text(
+                          'See Reviews',
+                          style: TextStyle(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => EmployerReviewsScreen(
+                      employerId:   job.employer!.id,
+                      employerName: job.employer!.name,
+                    ),
+                  ),
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color:        AppColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border:       Border.all(color: AppColors.border),
+                  ),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius:          22,
+                        backgroundColor: AppColors.primaryLight,
+                        child: const Icon(Icons.business_rounded, color: AppColors.primary),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              job.employer!.name,
+                              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                            ),
+                            Text(
+                              job.employer!.email,
+                              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(Icons.chevron_right_rounded, color: AppColors.textHint),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -440,7 +480,7 @@ class _InfoBadge extends StatelessWidget {
           const SizedBox(width: 5),
           Text(
             label,
-            style: const TextStyle(fontSize: 12, color: AppColors.textPrimary, fontWeight: FontWeight.w500),
+            style: TextStyle(fontSize: 12, color: AppColors.textPrimary, fontWeight: FontWeight.w500),
           ),
         ],
       ),

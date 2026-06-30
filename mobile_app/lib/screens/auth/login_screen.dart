@@ -83,7 +83,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      const Text(
+                      Text(
                         'PodiWeda-LK',
                         style: TextStyle(
                           fontSize:   26,
@@ -92,7 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 6),
-                      const Text(
+                      Text(
                         'Find your next opportunity',
                         style: TextStyle(
                           fontSize: 14,
@@ -106,7 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 40),
 
                 // ── Heading ───────────────────────────────────────────────
-                const Text(
+                Text(
                   'Welcome back 👋',
                   style: TextStyle(
                     fontSize:   22,
@@ -115,7 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
+                Text(
                   'Sign in to your account',
                   style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
                 ),
@@ -166,7 +166,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
+                    Text(
                       "Don't have an account? ",
                       style: TextStyle(color: AppColors.textSecondary),
                     ),

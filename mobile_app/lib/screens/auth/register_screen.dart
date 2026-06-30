@@ -77,7 +77,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Join PodiWeda-LK 🚀',
                   style: TextStyle(
                     fontSize:   22,
@@ -86,7 +86,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
+                Text(
                   'Create your account to get started',
                   style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
                 ),
@@ -94,7 +94,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 28),
 
                 // ── Role Selector ─────────────────────────────────────────
-                const Text(
+                Text(
                   'I am a...',
                   style: TextStyle(
                     fontSize:   13,
@@ -198,7 +198,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
+                    Text(
                       'Already have an account? ',
                       style: TextStyle(color: AppColors.textSecondary),
                     ),
@@ -279,7 +279,7 @@ class _RoleCard extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 subtitle,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   color:    AppColors.textSecondary,
                 ),

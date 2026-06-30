@@ -70,14 +70,14 @@ class _MyApplicationsScreenState extends State<MyApplicationsScreen> {
       body: appProv.isLoading
           ? const Center(child: CircularProgressIndicator())
           : appProv.myApplications.isEmpty
-              ? const Center(
+              ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.assignment_outlined, size: 64, color: AppColors.textHint),
-                      SizedBox(height: 16),
-                      Text('No applications yet', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                      SizedBox(height: 6),
+                      const SizedBox(height: 16),
+                      const Text('No applications yet', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 6),
                       Text('Start applying for jobs!', style: TextStyle(color: AppColors.textSecondary)),
                     ],
                   ),
@@ -149,12 +149,12 @@ class _ApplicationCard extends StatelessWidget {
           if (app.job != null) ...[
             Row(
               children: [
-                const Icon(Icons.location_on_outlined, size: 13, color: AppColors.textSecondary),
+                Icon(Icons.location_on_outlined, size: 13, color: AppColors.textSecondary),
                 const SizedBox(width: 4),
-                Text(app.job!.location, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                Text(app.job!.location, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                 const SizedBox(width: 12),
-                const Icon(Icons.attach_money_rounded, size: 13, color: AppColors.textSecondary),
-                Text('LKR ${app.job!.salary.toStringAsFixed(0)}', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                Icon(Icons.attach_money_rounded, size: 13, color: AppColors.textSecondary),
+                Text('LKR ${app.job!.salary.toStringAsFixed(0)}', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
               ],
             ),
           ],
@@ -162,20 +162,20 @@ class _ApplicationCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               app.coverLetter,
-              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ],
           const SizedBox(height: 10),
-          const Divider(color: AppColors.divider, height: 1),
+          Divider(color: AppColors.divider, height: 1),
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 _timeAgo(app.createdAt),
-                style: const TextStyle(fontSize: 11, color: AppColors.textHint),
+                style: TextStyle(fontSize: 11, color: AppColors.textHint),
               ),
               if (status == 'pending')
                 GestureDetector(

@@ -5,12 +5,14 @@ class ConversationModel {
   final List<ParticipantInfo> participants;
   final String        createdAt;
   final String?       lastMessage;
+  final String?       lastMessageAt;
 
   ConversationModel({
     required this.id,
     required this.participants,
     required this.createdAt,
     this.lastMessage,
+    this.lastMessageAt,
   });
 
   factory ConversationModel.fromJson(Map<String, dynamic> json) {
@@ -21,8 +23,9 @@ class ConversationModel {
           .whereType<Map<String, dynamic>>()
           .map(ParticipantInfo.fromJson)
           .toList(),
-      createdAt:   json['createdAt'] ?? '',
-      lastMessage: json['lastMessage'] as String?,
+      createdAt:     json['createdAt'] ?? '',
+      lastMessage:   json['lastMessage'] as String?,
+      lastMessageAt: json['lastMessageAt'] as String?,
     );
   }
 }

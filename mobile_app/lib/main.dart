@@ -13,6 +13,7 @@ import 'providers/saved_job_provider.dart';
 import 'providers/notification_provider.dart';
 import 'providers/chat_provider.dart';
 import 'providers/profile_provider.dart';
+import 'providers/theme_provider.dart';
 import 'screens/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/jobseeker/jobseeker_home.dart';
@@ -22,20 +23,10 @@ import 'screens/admin/admin_home.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Lock to portrait
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-
-  // Status bar style
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor:            Colors.transparent,
-      statusBarIconBrightness:   Brightness.dark,
-      systemNavigationBarColor:  Colors.white,
-    ),
-  );
 
   runApp(
     MultiProvider(
@@ -47,6 +38,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
         ChangeNotifierProvider(create: (_) => ChatProvider()),
         ChangeNotifierProvider(create: (_) => ProfileProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()..init()),
       ],
       child: const WorkLinkApp(),
     ),
@@ -58,20 +50,33 @@ class WorkLinkApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = context.watch<ThemeProvider>();
+
+    // Keep AppColors in sync with the resolved brightness on every rebuild
+    AppColors.init(themeProvider.isDarkMode);
+
     return MaterialApp(
       title:                      'WorkLink LK',
       debugShowCheckedModeBanner: false,
+      themeMode:                  themeProvider.mode,
       theme: AppTheme.lightTheme.copyWith(
-        textTheme: GoogleFonts.interTextTheme(
-          Theme.of(context).textTheme,
-        ),
+        textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme),
       ),
-      home: const _RootRouter(),
+      darkTheme: AppTheme.darkTheme.copyWith(
+        textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
+      ),
+      // KEY forces Flutter to throw away and rebuild the ENTIRE widget
+      // subtree below MaterialApp whenever dark/light mode changes — this
+      // is required because AppColors.xxx are plain static getters, not
+      // InheritedWidget lookups, so normal rebuilds wouldn't reach them.
+      home: KeyedSubtree(
+        key: ValueKey(themeProvider.isDarkMode),
+        child: const _RootRouter(),
+      ),
     );
   }
 }
 
-/// Listens to [AuthProvider] and routes based on auth status + role.
 class _RootRouter extends StatelessWidget {
   const _RootRouter();
 
@@ -82,13 +87,11 @@ class _RootRouter extends StatelessWidget {
     switch (auth.status) {
       case AuthStatus.initial:
         return const SplashScreen();
-
       case AuthStatus.authenticated:
         final role = auth.user?.role ?? 'jobseeker';
         if (role == 'admin')    return const AdminHome();
         if (role == 'employer') return const EmployerHome();
         return const JobSeekerHome();
-
       default:
         return const LoginScreen();
     }

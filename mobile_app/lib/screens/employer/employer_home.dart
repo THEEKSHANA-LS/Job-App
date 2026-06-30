@@ -6,6 +6,8 @@ import '../../constants/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/notification_provider.dart';
 import '../../screens/shared/notifications_screen.dart';
+import '../../screens/shared/conversations_screen.dart';
+import '../../widgets/theme_toggle_tile.dart';
 import 'my_jobs_screen.dart';
 import 'post_job_screen.dart';
 
@@ -39,6 +41,7 @@ class _EmployerHomeState extends State<EmployerHome> {
           MyJobsScreen(),
           // Key forces PostJobScreen to rebuild fresh each time tab is visited
           _PostJobTab(),
+          ConversationsScreen(),
           _EmployerProfileTab(),
         ],
       ),
@@ -57,6 +60,11 @@ class _EmployerHomeState extends State<EmployerHome> {
             icon:         Icon(Icons.add_circle_outline_rounded),
             selectedIcon: Icon(Icons.add_circle_rounded, color: AppColors.primary),
             label:        'Post Job',
+          ),
+          const NavigationDestination(
+            icon:         Icon(Icons.chat_bubble_outline_rounded),
+            selectedIcon: Icon(Icons.chat_bubble_rounded, color: AppColors.primary),
+            label:        'Messages',
           ),
           NavigationDestination(
             icon: Badge(
@@ -154,7 +162,7 @@ class _EmployerProfileTab extends StatelessWidget {
             ),
             Text(
               user?.email ?? '',
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
             ),
             const SizedBox(height: 6),
             Container(
@@ -186,6 +194,8 @@ class _EmployerProfileTab extends StatelessWidget {
             ),
             _Tile(icon: Icons.rate_review_outlined, label: 'Reviews',  badge: 0, onTap: () {}),
             _Tile(icon: Icons.settings_outlined,    label: 'Settings', badge: 0, onTap: () {}),
+            const Divider(),
+            const ThemeToggleTile(),
             const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
@@ -231,9 +241,9 @@ class _Tile extends StatelessWidget {
       trailing: badge > 0
           ? Badge(
               label: Text('$badge'),
-              child: const Icon(Icons.chevron_right_rounded, color: AppColors.textHint),
+              child: Icon(Icons.chevron_right_rounded, color: AppColors.textHint),
             )
-          : const Icon(Icons.chevron_right_rounded, color: AppColors.textHint),
+          : Icon(Icons.chevron_right_rounded, color: AppColors.textHint),
       contentPadding: EdgeInsets.zero,
       onTap:          onTap,
     );

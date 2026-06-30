@@ -173,11 +173,11 @@ class _MyJobsScreenState extends State<MyJobsScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.work_off_rounded, size: 64, color: AppColors.textHint),
+                          Icon(Icons.work_off_rounded, size: 64, color: AppColors.textHint),
                           const SizedBox(height: 16),
                           const Text('No jobs posted yet', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                           const SizedBox(height: 8),
-                          const Text('Tap + or go to Post Job tab', style: TextStyle(color: AppColors.textSecondary)),
+                          Text('Tap + or go to Post Job tab', style: TextStyle(color: AppColors.textSecondary)),
                           const SizedBox(height: 20),
                           ElevatedButton.icon(
                             onPressed: () async {
@@ -255,7 +255,7 @@ class _EmployerJobCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   job.title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize:   15,
                     fontWeight: FontWeight.w700,
                     color:      AppColors.textPrimary,
@@ -310,7 +310,7 @@ class _EmployerJobCard extends StatelessWidget {
           ),
 
           const SizedBox(height: 12),
-          const Divider(color: AppColors.divider, height: 1),
+          Divider(color: AppColors.divider, height: 1),
           const SizedBox(height: 10),
 
           // ── Actions ───────────────────────────────────────────────
@@ -361,7 +361,7 @@ class _Meta extends StatelessWidget {
       children: [
         Icon(icon, size: 13, color: AppColors.textSecondary),
         const SizedBox(width: 4),
-        Text(text, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+        Text(text, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
       ],
     );
   }

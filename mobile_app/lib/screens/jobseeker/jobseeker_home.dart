@@ -10,6 +10,8 @@ import '../../providers/saved_job_provider.dart';
 import '../../providers/notification_provider.dart';
 import '../../screens/shared/notifications_screen.dart';
 import '../../screens/shared/edit_profile_screen.dart';
+import '../../screens/shared/conversations_screen.dart';
+import '../../widgets/theme_toggle_tile.dart';
 import 'job_list_screen.dart';
 import 'my_applications_screen.dart';
 import 'ai_recommendations_screen.dart';
@@ -167,10 +169,10 @@ class _ProfileTab extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             Text(user?.name ?? '', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-            Text(user?.email ?? '', style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+            Text(user?.email ?? '', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
             if (user?.phone != null && user!.phone!.isNotEmpty) ...[
               const SizedBox(height: 4),
-              Text(user.phone!, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+              Text(user.phone!, style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
             ],
             const SizedBox(height: 8),
             Container(
@@ -225,7 +227,7 @@ class _ProfileTab extends StatelessWidget {
                       color:        AppColors.divider,
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Text(s, style: const TextStyle(fontSize: 12, color: AppColors.textPrimary)),
+                    child: Text(s, style: TextStyle(fontSize: 12, color: AppColors.textPrimary)),
                   )).toList(),
                 ),
               ),
@@ -255,6 +257,15 @@ class _ProfileTab extends StatelessWidget {
               ),
             ),
             _ProfileTile(
+              icon:  Icons.chat_bubble_outline_rounded,
+              label: 'Messages',
+              badge: 0,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ConversationsScreen()),
+              ),
+            ),
+            _ProfileTile(
               icon:  Icons.notifications_outlined,
               label: 'Notifications',
               badge: unread,
@@ -264,6 +275,8 @@ class _ProfileTab extends StatelessWidget {
               ),
             ),
             _ProfileTile(icon: Icons.settings_outlined, label: 'Settings', badge: 0, onTap: () {}),
+            const Divider(),
+            const ThemeToggleTile(),
 
             const SizedBox(height: 24),
 
@@ -309,9 +322,9 @@ class _ProfileTile extends StatelessWidget {
       trailing: badge > 0
           ? Badge(
               label: Text('$badge'),
-              child: const Icon(Icons.chevron_right_rounded, color: AppColors.textHint),
+              child: Icon(Icons.chevron_right_rounded, color: AppColors.textHint),
             )
-          : const Icon(Icons.chevron_right_rounded, color: AppColors.textHint),
+          : Icon(Icons.chevron_right_rounded, color: AppColors.textHint),
       contentPadding: EdgeInsets.zero,
       onTap:          onTap,
     );

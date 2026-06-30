@@ -17,10 +17,27 @@ class ChatService {
       body:  {'receiverId': receiverId},
     );
     if (response.success && response.data != null) {
-      final conv = ConversationModel.fromJson(
-        response.data!['data'] as Map<String, dynamic>,
-      );
-      return {'success': true, 'conversation': conv};
+      final raw = response.data!['data'];
+      if (raw is Map<String, dynamic>) {
+        return {'success': true, 'conversation': ConversationModel.fromJson(raw)};
+      }
+    }
+    return {'success': false, 'message': response.message};
+  }
+
+  /// GET /api/chat/conversations — list all conversations for current user
+  static Future<Map<String, dynamic>> getMyConversations(String token) async {
+    final response = await ApiService.get(
+      AppConstants.chatConversationsEndpoint,
+      token: token,
+    );
+    if (response.success && response.data != null) {
+      final list = response.data!['data'] as List<dynamic>;
+      final convs = list
+          .whereType<Map<String, dynamic>>()
+          .map(ConversationModel.fromJson)
+          .toList();
+      return {'success': true, 'conversations': convs};
     }
     return {'success': false, 'message': response.message};
   }
@@ -37,7 +54,8 @@ class ChatService {
     if (response.success && response.data != null) {
       final list = response.data!['data'] as List<dynamic>;
       final msgs = list
-          .map((m) => MessageModel.fromJson(m as Map<String, dynamic>))
+          .whereType<Map<String, dynamic>>()
+          .map(MessageModel.fromJson)
           .toList();
       return {'success': true, 'messages': msgs};
     }

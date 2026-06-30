@@ -179,7 +179,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             const SizedBox(height: 12),
                             Text(
                               'Say hi to ${widget.receiverName}!',
-                              style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                              style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
                             ),
                           ],
                         ),
@@ -224,11 +224,11 @@ class _ChatScreenState extends State<ChatScreen> {
                       contentPadding:  const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(24),
-                        borderSide:   const BorderSide(color: AppColors.border),
+                        borderSide:   BorderSide(color: AppColors.border),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(24),
-                        borderSide:   const BorderSide(color: AppColors.border),
+                        borderSide:   BorderSide(color: AppColors.border),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(24),
@@ -365,15 +365,15 @@ class _DateDivider extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         children: [
-          const Expanded(child: Divider(color: AppColors.border)),
+          Expanded(child: Divider(color: AppColors.border)),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Text(
               label,
-              style: const TextStyle(fontSize: 11, color: AppColors.textHint),
+              style: TextStyle(fontSize: 11, color: AppColors.textHint),
             ),
           ),
-          const Expanded(child: Divider(color: AppColors.border)),
+          Expanded(child: Divider(color: AppColors.border)),
         ],
       ),
     );

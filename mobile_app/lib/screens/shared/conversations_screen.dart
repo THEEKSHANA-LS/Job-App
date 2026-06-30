@@ -3,13 +3,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../constants/app_theme.dart';
-
+import '../../models/conversation_model.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/chat_provider.dart';
+import '../../services/chat_service.dart';
+import '../../widgets/empty_state.dart';
 import 'chat_screen.dart';
 
-/// A simple start-chat dialog — type a receiver user ID to open a chat.
-/// In a real app you'd pick from contacts / employer profile.
 class ConversationsScreen extends StatefulWidget {
   const ConversationsScreen({super.key});
 
@@ -18,164 +17,123 @@ class ConversationsScreen extends StatefulWidget {
 }
 
 class _ConversationsScreenState extends State<ConversationsScreen> {
-  // In production you'd store/load past conversations from local DB or an
-  // endpoint. For now we keep an in-memory list of opened chats this session.
-  final List<_RecentChat> _recent = [];
-  final _idCtrl = TextEditingController();
+  List<ConversationModel> _conversations = [];
+  bool    _loading = true;
+  String? _error;
 
-  void _startNewChat() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Start a Chat'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Enter the User ID or email of the person you want to message.',
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller:   _idCtrl,
-              decoration:   const InputDecoration(
-                labelText: 'User ID',
-                hintText:  'Paste user _id here',
-                prefixIcon: Icon(Icons.person_search_rounded),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () { _idCtrl.clear(); Navigator.pop(ctx); },
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final id = _idCtrl.text.trim();
-              if (id.isEmpty) return;
-              _idCtrl.clear();
-              Navigator.pop(ctx);
-              _openChat(receiverId: id, receiverName: 'User');
-            },
-            child: const Text('Open Chat'),
-          ),
-        ],
-      ),
-    );
+  @override
+  void initState() {
+    super.initState();
+    _fetchConversations();
   }
 
-  void _openChat({required String receiverId, required String receiverName}) {
-    // Add to recent if not already there
-    if (!_recent.any((r) => r.receiverId == receiverId)) {
+  Future<void> _fetchConversations() async {
+    setState(() { _loading = true; _error = null; });
+
+    final token  = context.read<AuthProvider>().user?.token ?? '';
+    final result = await ChatService.getMyConversations(token);
+
+    if (!mounted) return;
+
+    if (result['success'] == true) {
       setState(() {
-        _recent.insert(0, _RecentChat(receiverId: receiverId, name: receiverName));
+        _conversations = result['conversations'] as List<ConversationModel>;
+        _loading       = false;
+      });
+    } else {
+      setState(() {
+        _error   = result['message'] as String? ?? 'Failed to load conversations';
+        _loading = false;
       });
     }
+  }
+
+  void _openChat(ConversationModel conv) {
+    final myId = context.read<AuthProvider>().user?.id ?? '';
+    final other = conv.participants.firstWhere(
+      (p) => p.id != myId,
+      orElse: () => conv.participants.isNotEmpty
+          ? conv.participants.first
+          : ParticipantInfo(id: '', name: 'Unknown', email: ''),
+    );
 
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ChatScreen(receiverId: receiverId, receiverName: receiverName),
+        builder: (_) => ChatScreen(
+          conversation: conv,
+          receiverName: other.name,
+        ),
       ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _idCtrl.dispose();
-    super.dispose();
+    ).then((_) => _fetchConversations()); // refresh list after returning
   }
 
   @override
   Widget build(BuildContext context) {
+    final myId = context.read<AuthProvider>().user?.id ?? '';
+
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Messages'),
-        actions: [
-          IconButton(
-            icon:    const Icon(Icons.edit_rounded),
-            tooltip: 'New Chat',
-            onPressed: _startNewChat,
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed:       _startNewChat,
-        backgroundColor: AppColors.primary,
-        child:           const Icon(Icons.chat_rounded, color: Colors.white),
-      ),
-      body: _recent.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.chat_bubble_outline_rounded, size: 64, color: AppColors.textHint),
-                  const SizedBox(height: 16),
-                  const Text('No conversations yet', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Tap the pencil icon to start a chat',
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton.icon(
-                    onPressed: _startNewChat,
-                    icon:  const Icon(Icons.add_rounded),
-                    label: const Text('New Message'),
-                  ),
-                ],
-              ),
-            )
-          : ListView.separated(
-              padding:       const EdgeInsets.symmetric(vertical: 8),
-              itemCount:     _recent.length,
-              separatorBuilder: (_, __) => const Divider(
-                color: AppColors.divider,
-                height: 1,
-                indent: 74,
-              ),
-              itemBuilder: (_, i) {
-                final chat = _recent[i];
-                return ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  leading: CircleAvatar(
-                    radius:          24,
-                    backgroundColor: AppColors.primaryLight,
-                    child: Text(
-                      chat.name.isNotEmpty ? chat.name[0].toUpperCase() : '?',
-                      style: const TextStyle(
-                        color:      AppColors.primary,
-                        fontWeight: FontWeight.w700,
-                        fontSize:   16,
+      appBar: AppBar(title: const Text('Messages')),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+              ? ErrorState(message: _error!, onRetry: _fetchConversations)
+              : _conversations.isEmpty
+                  ? const EmptyState(
+                      icon:     Icons.chat_bubble_outline_rounded,
+                      title:    'No conversations yet',
+                      subtitle: 'Messages with employers or job seekers\nwill appear here',
+                    )
+                  : RefreshIndicator(
+                      onRefresh: _fetchConversations,
+                      child: ListView.separated(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        itemCount: _conversations.length,
+                        separatorBuilder: (_, __) => Divider(
+                          color: AppColors.divider, height: 1, indent: 74,
+                        ),
+                        itemBuilder: (_, i) {
+                          final conv = _conversations[i];
+                          final other = conv.participants.firstWhere(
+                            (p) => p.id != myId,
+                            orElse: () => conv.participants.isNotEmpty
+                                ? conv.participants.first
+                                : ParticipantInfo(id: '', name: 'Unknown', email: ''),
+                          );
+
+                          return ListTile(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                            leading: CircleAvatar(
+                              radius:          24,
+                              backgroundColor: AppColors.primaryLight,
+                              child: Text(
+                                other.name.isNotEmpty ? other.name[0].toUpperCase() : '?',
+                                style: const TextStyle(
+                                  color:      AppColors.primary,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize:   16,
+                                ),
+                              ),
+                            ),
+                            title: Text(
+                              other.name,
+                              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                            ),
+                            subtitle: Text(
+                              conv.lastMessage?.isNotEmpty == true
+                                  ? conv.lastMessage!
+                                  : 'Tap to start chatting',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                            ),
+                            trailing: Icon(Icons.chevron_right_rounded, color: AppColors.textHint),
+                            onTap: () => _openChat(conv),
+                          );
+                        },
                       ),
                     ),
-                  ),
-                  title: Text(
-                    chat.name,
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                  ),
-                  subtitle: const Text(
-                    'Tap to continue the conversation',
-                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                  ),
-                  trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textHint),
-                  onTap: () => _openChat(
-                    receiverId:   chat.receiverId,
-                    receiverName: chat.name,
-                  ),
-                );
-              },
-            ),
     );
   }
-}
-
-class _RecentChat {
-  final String receiverId;
-  final String name;
-  _RecentChat({required this.receiverId, required this.name});
 }

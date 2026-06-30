@@ -243,7 +243,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
         children: [
           const Text('Your Skills', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Add skills to get AI-powered job recommendations',
             style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
           ),
@@ -285,7 +285,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                 borderRadius: BorderRadius.circular(12),
                 border:       Border.all(color: AppColors.border),
               ),
-              child: const Center(
+              child: Center(
                 child: Text('No skills added yet', style: TextStyle(color: AppColors.textHint)),
               ),
             )
@@ -326,7 +326,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
         children: [
           const Text('Your CV / Resume', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Upload a PDF or Word document. Employers will be able to view your CV.',
             style: TextStyle(color: AppColors.textSecondary, fontSize: 13, height: 1.5),
           ),
@@ -345,13 +345,13 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                 children: [
                   const Icon(Icons.description_rounded, color: AppColors.success, size: 32),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('CV Uploaded ✓',
+                        const Text('CV Uploaded ✓',
                             style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.success)),
-                        SizedBox(height: 2),
+                        const SizedBox(height: 2),
                         Text('Tap the icon to view',
                             style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                       ],
@@ -423,7 +423,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
           ),
 
           const SizedBox(height: 12),
-          const Center(
+          Center(
             child: Text(
               'Supported formats: PDF, DOC, DOCX',
               style: TextStyle(fontSize: 12, color: AppColors.textHint),

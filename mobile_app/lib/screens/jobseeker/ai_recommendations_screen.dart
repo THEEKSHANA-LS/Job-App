@@ -184,7 +184,7 @@ class _AiRecommendationsScreenState extends State<AiRecommendationsScreen> {
                 ? 'Our AI provider is currently experiencing high traffic. Please wait a moment and try again.'
                 : (_error ?? 'Unknown error occurred'),
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 13,
               height: 1.5,
@@ -215,7 +215,7 @@ class _AiRecommendationsScreenState extends State<AiRecommendationsScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: AppColors.primaryLight,
                 shape: BoxShape.circle,
               ),
@@ -225,7 +225,7 @@ class _AiRecommendationsScreenState extends State<AiRecommendationsScreen> {
             const Text('No Recommendations Yet',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Add skills to your profile so our AI can find the best matching jobs for you.',
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.textSecondary, fontSize: 13, height: 1.5),
@@ -254,7 +254,7 @@ class _AiRecommendationsScreenState extends State<AiRecommendationsScreen> {
         ),
         child: Text(
           _rawText ?? '',
-          style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.6),
+          style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.6),
         ),
       ),
     );
@@ -337,7 +337,7 @@ class _ShimmerBoxState extends State<_ShimmerBox> with SingleTickerProviderState
           gradient: LinearGradient(
             begin: Alignment(_anim.value - 1, 0),
             end:   Alignment(_anim.value,     0),
-            colors: const [AppColors.background, AppColors.divider, AppColors.background],
+            colors: [AppColors.background, AppColors.divider, AppColors.background],
           ),
         ),
       ),

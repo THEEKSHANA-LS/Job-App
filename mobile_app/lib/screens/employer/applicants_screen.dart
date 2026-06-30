@@ -105,7 +105,7 @@ class _ApplicantsScreenState extends State<ApplicantsScreen> {
       backgroundColor:    Colors.transparent,
       isScrollControlled: true,
       builder: (_) => Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color:        AppColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
@@ -131,7 +131,7 @@ class _ApplicantsScreenState extends State<ApplicantsScreen> {
             const SizedBox(height: 4),
             Text(
               'Current: ${app.status}',
-              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
             ),
             const SizedBox(height: 12),
             ..._statuses.map((s) {
@@ -176,7 +176,7 @@ class _ApplicantsScreenState extends State<ApplicantsScreen> {
             const Text('Applicants', style: TextStyle(fontSize: 16)),
             Text(
               widget.job.title,
-              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w400),
+              style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w400),
             ),
           ],
         ),
@@ -220,7 +220,7 @@ class _ApplicantsScreenState extends State<ApplicantsScreen> {
                   ),
                 )
               : _applications.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -331,16 +331,16 @@ class _ApplicantCard extends StatelessWidget {
                     ),
                     Text(
                       applicant?.email ?? '',
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                     ),
                     if (applicant?.phone != null && applicant!.phone!.isNotEmpty)
                       Row(
                         children: [
-                          const Icon(Icons.phone_outlined, size: 11, color: AppColors.textSecondary),
+                          Icon(Icons.phone_outlined, size: 11, color: AppColors.textSecondary),
                           const SizedBox(width: 3),
                           Text(
                             applicant.phone!,
-                            style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                            style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
                           ),
                         ],
                       ),
@@ -372,7 +372,7 @@ class _ApplicantCard extends StatelessWidget {
               ),
               child: Text(
                 app.coverLetter,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   color:    AppColors.textSecondary,
                   height:   1.5,
@@ -384,7 +384,7 @@ class _ApplicantCard extends StatelessWidget {
           ],
 
           const SizedBox(height: 12),
-          const Divider(color: AppColors.divider, height: 1),
+          Divider(color: AppColors.divider, height: 1),
           const SizedBox(height: 10),
 
           Row(
@@ -392,7 +392,7 @@ class _ApplicantCard extends StatelessWidget {
             children: [
               Text(
                 _timeAgo(app.createdAt),
-                style: const TextStyle(fontSize: 11, color: AppColors.textHint),
+                style: TextStyle(fontSize: 11, color: AppColors.textHint),
               ),
               GestureDetector(
                 onTap: onStatusChange,

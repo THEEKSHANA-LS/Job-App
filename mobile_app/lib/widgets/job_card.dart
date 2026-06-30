@@ -62,7 +62,7 @@ class JobCard extends StatelessWidget {
                     children: [
                       Text(
                         job.title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize:   15,
                           color:      AppColors.textPrimary,
@@ -73,7 +73,7 @@ class JobCard extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         job.employer?.name ?? 'Unknown Employer',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           color:    AppColors.textSecondary,
                         ),
@@ -113,7 +113,7 @@ class JobCard extends StatelessWidget {
             ),
 
             const SizedBox(height: 12),
-            const Divider(color: AppColors.divider, height: 1),
+            Divider(color: AppColors.divider, height: 1),
             const SizedBox(height: 10),
 
             // ── Salary ───────────────────────────────────────────────────
@@ -130,7 +130,7 @@ class JobCard extends StatelessWidget {
                 ),
                 Text(
                   _timeAgo(job.createdAt),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     color:    AppColors.textHint,
                   ),

@@ -282,7 +282,7 @@ class _AdminHomeState extends State<AdminHome> {
     }
 
     if (_users.isEmpty) {
-      return const Center(
+      return Center(
         child: Text('No users found', style: TextStyle(color: AppColors.textSecondary)),
       );
     }
@@ -326,7 +326,7 @@ class _AdminHomeState extends State<AdminHome> {
                       ),
                       Text(
                         u['email'] as String? ?? '',
-                        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                        style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                       ),
                     ],
                   ),
@@ -433,7 +433,7 @@ class _StatCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: color)),
-              Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+              Text(label, style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
             ],
           ),
         ],
@@ -467,7 +467,7 @@ class _BreakdownCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(value, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: color)),
-              Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+              Text(label, style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
             ],
           ),
         ],
